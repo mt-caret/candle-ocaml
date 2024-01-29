@@ -1,0 +1,10 @@
+[workspace]
+resolver = "2"
+members = [
+    "candle-ocaml",
+    "candle-ocaml-macros",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"

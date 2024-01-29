@@ -1,0 +1,31 @@
+; Standard boilerplate from
+; https://dune.readthedocs.io/en/stable/faq.html#files-and-directories-whose-names-begin-with-period-are-ignored-by-source-tree
+
+(dirs :standard .cargo \ target)
+
+(data_only_dirs vendor)
+
+(rule
+ (targets libcandle_ocaml.a dllcandle_ocaml.so)
+ (deps
+  (source_tree .))
+ (action
+  (no-infer
+   (progn
+    (run cargo build)
+    (copy ./target/debug/libcandle_ocaml.so ./dllcandle_ocaml.so)
+    (copy ./target/debug/libcandle_ocaml.a ./libcandle_ocaml.a)))))
+
+(library
+ (name candle_ocaml_bindings)
+ (public_name candle.candle_ocaml_bindings)
+ (foreign_archives candle_ocaml)
+ (c_library_flags
+  -lcuda
+  -lnvrtc
+  -lcurand
+  -lcublas
+  -I
+  /usr/local/cuda/include
+  -L
+  /usr/local/cuda/lib64/stubs))

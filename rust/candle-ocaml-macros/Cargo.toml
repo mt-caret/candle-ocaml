@@ -1,0 +1,6 @@
+[package]
+name = "candle-ocaml-macros"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]

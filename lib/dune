@@ -1,0 +1,7 @@
+(library
+ (public_name candle)
+ (name candle)
+ (libraries core candle_ocaml_bindings)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane ppx_typed_fields)))
