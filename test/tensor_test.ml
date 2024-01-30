@@ -20,6 +20,28 @@ let%expect_test "create" =
     Tensor[[10], f64] |}]
 ;;
 
+let%expect_test "create from arrays" =
+  let open Or_error.Let_syntax in
+  Or_error.ok_exn
+  @@
+  let%bind t = Tensor.from_array [| 0.; 1.; 2.; 3.; 4.; 5. |] ~shape:[ 2; 3 ] in
+  print t;
+  [%expect {|
+    [[0., 1., 2.],
+     [3., 4., 5.]]
+    Tensor[[2, 3], f64] |}];
+  let%map t =
+    Tensor.from_float_array
+      (Stdlib.Float.Array.of_list [ 0.; 1.; 2.; 3.; 4.; 5. ])
+      ~shape:[ 2; 3 ]
+  in
+  print t;
+  [%expect {|
+    [[0., 1., 2.],
+     [3., 4., 5.]]
+    Tensor[[2, 3], f64] |}]
+;;
+
 let%expect_test "saving and loading tensors" =
   let open Or_error.Let_syntax in
   Or_error.ok_exn

@@ -17,6 +17,30 @@ let randn ~mean ~std ~shape =
   randn ~mean ~std ~shape |> Result.map_error ~f:Error.of_string
 ;;
 
+external from_float_array
+  :  floatarray
+  -> shape:int list
+  -> (t, string) result
+  = "rust_tensor_from_float_array"
+
+let from_float_array ?shape array =
+  let shape = Option.value shape ~default:[ Stdlib.Float.Array.length array ] in
+  from_float_array array ~shape |> Result.map_error ~f:Error.of_string
+;;
+
+external from_uniform_array
+  :  float Uniform_array.t
+  -> shape:int list
+  -> (t, string) result
+  = "rust_tensor_from_uniform_array"
+
+let from_array ?shape array =
+  let shape = Option.value shape ~default:[ Array.length array ] in
+  if Obj.tag (Obj.repr array) = Obj.double_array_tag
+  then from_float_array (Obj.magic array) ~shape
+  else from_uniform_array (Obj.magic array) ~shape |> Result.map_error ~f:Error.of_string
+;;
+
 external matmul : t -> t -> (t, string) result = "rust_tensor_matmul"
 
 let matmul t1 t2 = matmul t1 t2 |> Result.map_error ~f:Error.of_string

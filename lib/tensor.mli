@@ -5,6 +5,8 @@ type t
 
 val arange : start:float -> end_:float -> t Or_error.t
 val randn : mean:float -> std:float -> shape:int list -> t Or_error.t
+val from_array : ?shape:int list -> float array -> t Or_error.t
+val from_float_array : ?shape:int list -> floatarray -> t Or_error.t
 val matmul : t -> t -> t Or_error.t
 val relu : t -> t Or_error.t
 val to_string : t -> string

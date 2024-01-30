@@ -1,6 +1,9 @@
 use crate::interop::Abstract;
 use candle_core::{safetensors, Device, Error, Tensor};
-use ocaml_interop::{DynBox, OCaml, OCamlFloat, OCamlInt, OCamlList, OCamlRef, ToOCaml};
+use ocaml_interop::{
+    DynBox, OCaml, OCamlFloat, OCamlFloatArray, OCamlInt, OCamlList, OCamlRef, OCamlUniformArray,
+    ToOCaml,
+};
 
 ocaml_interop::ocaml_export! {
     fn rust_tensor_arange(cr, start: OCamlRef<OCamlFloat>, end: OCamlRef<OCamlFloat>) -> OCaml<Result<DynBox<Tensor>, String>> {
@@ -17,6 +20,22 @@ ocaml_interop::ocaml_export! {
         let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
 
         Tensor::randn(mean, std, shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+    }
+
+    fn rust_tensor_from_float_array(cr, array: OCamlRef<OCamlFloatArray>, shape: OCamlRef<OCamlList<OCamlInt>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+        let array: Vec<f64> = array.to_rust(cr);
+        let shape: Vec<i64> = shape.to_rust(cr);
+        let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+
+        Tensor::from_vec(array, shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+    }
+
+    fn rust_tensor_from_uniform_array(cr, array: OCamlRef<OCamlUniformArray<OCamlFloat>>, shape: OCamlRef<OCamlList<OCamlInt>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+        let array: Vec<f64> = array.to_rust(cr);
+        let shape: Vec<i64> = shape.to_rust(cr);
+        let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+
+        Tensor::from_vec(array, shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
     fn rust_tensor_matmul(cr, tensor1: OCamlRef<DynBox<Tensor>>, tensor2: OCamlRef<DynBox<Tensor>>) -> OCaml<Result<DynBox<Tensor>, String>> {
