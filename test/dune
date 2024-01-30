@@ -1,2 +1,6 @@
-(test
- (name test_candle))
+(library
+ (name candle_tests)
+ (libraries candle core shell.filename_extended)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane ppx_typed_fields)))
