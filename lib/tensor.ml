@@ -41,6 +41,17 @@ let from_array ?shape array =
   else from_uniform_array (Obj.magic array) ~shape |> Result.map_error ~f:Error.of_string
 ;;
 
+external from_bigarray
+  :  (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
+  -> shape:int list
+  -> (t, string) result
+  = "rust_tensor_from_bigarray"
+
+let from_bigarray ?shape bigarray =
+  let shape = Option.value shape ~default:[ Bigarray.Array1.dim bigarray ] in
+  from_bigarray bigarray ~shape |> Result.map_error ~f:Error.of_string
+;;
+
 external matmul : t -> t -> (t, string) result = "rust_tensor_matmul"
 
 let matmul t1 t2 = matmul t1 t2 |> Result.map_error ~f:Error.of_string

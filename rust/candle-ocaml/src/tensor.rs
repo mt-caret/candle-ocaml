@@ -1,9 +1,10 @@
 use crate::interop::Abstract;
 use candle_core::{safetensors, Device, Error, Tensor};
 use ocaml_interop::{
-    DynBox, OCaml, OCamlFloat, OCamlFloatArray, OCamlInt, OCamlList, OCamlRef, OCamlUniformArray,
-    ToOCaml,
+    bigarray, BoxRoot, DynBox, OCaml, OCamlFloat, OCamlFloatArray, OCamlInt, OCamlList, OCamlRef,
+    OCamlUniformArray, ToOCaml,
 };
+use std::borrow::Borrow;
 
 ocaml_interop::ocaml_export! {
     fn rust_tensor_arange(cr, start: OCamlRef<OCamlFloat>, end: OCamlRef<OCamlFloat>) -> OCaml<Result<DynBox<Tensor>, String>> {
@@ -36,6 +37,14 @@ ocaml_interop::ocaml_export! {
         let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
 
         Tensor::from_vec(array, shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+    }
+
+    fn rust_tensor_from_bigarray(cr, bigarray: OCamlRef<bigarray::Array1<f64>>, shape: OCamlRef<OCamlList<OCamlInt>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+        let bigarray: BoxRoot<bigarray::Array1<f64>> = bigarray.to_boxroot(cr);
+        let shape: Vec<i64> = shape.to_rust(cr);
+        let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+
+        Tensor::from_slice(bigarray.get(cr).borrow(), shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
     fn rust_tensor_matmul(cr, tensor1: OCamlRef<DynBox<Tensor>>, tensor2: OCamlRef<DynBox<Tensor>>) -> OCaml<Result<DynBox<Tensor>, String>> {

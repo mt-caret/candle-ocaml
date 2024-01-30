@@ -30,9 +30,19 @@ let%expect_test "create from arrays" =
     [[0., 1., 2.],
      [3., 4., 5.]]
     Tensor[[2, 3], f64] |}];
-  let%map t =
+  let%bind t =
     Tensor.from_float_array
       (Stdlib.Float.Array.of_list [ 0.; 1.; 2.; 3.; 4.; 5. ])
+      ~shape:[ 2; 3 ]
+  in
+  print t;
+  [%expect {|
+    [[0., 1., 2.],
+     [3., 4., 5.]]
+    Tensor[[2, 3], f64] |}];
+  let%map t =
+    Tensor.from_bigarray
+      (Bigarray.Array1.init Float64 C_layout 6 Float.of_int)
       ~shape:[ 2; 3 ]
   in
   print t;
