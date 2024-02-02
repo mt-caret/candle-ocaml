@@ -1,3 +1,5 @@
+// We ignore this lint since we can't really refactor these types to be "better"
+#![allow(clippy::type_complexity)]
 use crate::interop::Abstract;
 use candle_core::{safetensors, Device, Error, Tensor};
 use ocaml_interop::{
