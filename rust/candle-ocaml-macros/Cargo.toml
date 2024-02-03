@@ -4,3 +4,13 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+proc-macro2 = "1.0.78"
+quote = "1.0.35"
+syn = "2.0.48"
+
+[dev-dependencies]
+expect-test = "1.4.1"
+prettyplease = "0.2.16"
+
+[lib]
+proc-macro = true
