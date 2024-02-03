@@ -102,6 +102,7 @@ unsafe impl ToOCaml<CandleDeviceLocation> for DeviceLocation {
                     block
                 }
                 DeviceLocation::Metal { gpu_id } => {
+                    // TODO: set correct tag here.
                     let block: OCaml<CandleDeviceLocation> = OCaml::new(cr, caml_alloc(1, 0));
                     store_field(block.get_raw(), 0, ((*gpu_id as isize) << 1) | 1);
                     block
