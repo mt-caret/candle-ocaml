@@ -148,6 +148,23 @@ fn rust_tensor_to_device<'a>(
 }
 
 #[ocaml_interop_export]
+fn rust_tensor_reshape<'a>(
+    cr: &'a mut &'a mut OCamlRuntime,
+    tensor: OCamlRef<DynBox<Tensor>>,
+    shape: OCamlRef<OCamlList<OCamlInt>>,
+) -> OCaml<'a, Result<DynBox<Tensor>, String>> {
+    let Abstract(tensor) = tensor.to_rust(cr);
+    let shape: Vec<i64> = shape.to_rust(cr);
+    let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+
+    tensor
+        .reshape(shape)
+        .map(Abstract)
+        .map_err(|err: Error| err.to_string())
+        .to_ocaml(cr)
+}
+
+#[ocaml_interop_export]
 fn rust_tensor_eq<'a>(
     cr: &'a mut &'a mut OCamlRuntime,
     tensor1: OCamlRef<DynBox<Tensor>>,
@@ -328,6 +345,60 @@ fn rust_tensor_mean_all<'a>(
 
     tensor
         .mean_all()
+        .map(Abstract)
+        .map_err(|err: Error| err.to_string())
+        .to_ocaml(cr)
+}
+
+#[ocaml_interop_export]
+fn rust_tensor_max_pool2d<'a>(
+    cr: &'a mut &'a mut OCamlRuntime,
+    tensor: OCamlRef<DynBox<Tensor>>,
+    size1: OCamlRef<OCamlInt>,
+    size2: OCamlRef<OCamlInt>,
+) -> OCaml<'a, Result<DynBox<Tensor>, String>> {
+    let Abstract(tensor) = tensor.to_rust(cr);
+    let size1: i64 = size1.to_rust(cr);
+    let size2: i64 = size2.to_rust(cr);
+
+    tensor
+        .max_pool2d((size1 as usize, size2 as usize))
+        .map(Abstract)
+        .map_err(|err: Error| err.to_string())
+        .to_ocaml(cr)
+}
+
+#[ocaml_interop_export]
+fn rust_tensor_flatten_from<'a>(
+    cr: &'a mut &'a mut OCamlRuntime,
+    tensor: OCamlRef<DynBox<Tensor>>,
+    dim: OCamlRef<OCamlInt>,
+) -> OCaml<'a, Result<DynBox<Tensor>, String>> {
+    let Abstract(tensor) = tensor.to_rust(cr);
+    let CandleDimResult(dim_result) = dim.to_rust(cr);
+
+    dim_result
+        .and_then(|dim| tensor.flatten_from(dim))
+        .map(Abstract)
+        .map_err(|err: Error| err.to_string())
+        .to_ocaml(cr)
+}
+
+#[ocaml_interop_export]
+fn rust_tensor_narrow<'a>(
+    cr: &'a mut &'a mut OCamlRuntime,
+    tensor: OCamlRef<DynBox<Tensor>>,
+    dim: OCamlRef<OCamlInt>,
+    start: OCamlRef<OCamlInt>,
+    len: OCamlRef<OCamlInt>,
+) -> OCaml<'a, Result<DynBox<Tensor>, String>> {
+    let Abstract(tensor) = tensor.to_rust(cr);
+    let CandleDimResult(dim_result) = dim.to_rust(cr);
+    let start: i64 = start.to_rust(cr);
+    let len: i64 = len.to_rust(cr);
+
+    dim_result
+        .and_then(|dim| tensor.narrow(dim, start as usize, len as usize))
         .map(Abstract)
         .map_err(|err: Error| err.to_string())
         .to_ocaml(cr)

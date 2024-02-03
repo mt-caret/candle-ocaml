@@ -18,6 +18,7 @@ val from_bigarray
 val to_scalar : t -> float Or_error.t
 val to_dtype : t -> dtype:Dtype.t -> t Or_error.t
 val to_device : t -> device:Device.t -> t Or_error.t
+val reshape : t -> shape:int list -> t Or_error.t
 val ( = ) : t -> t -> t Or_error.t
 val ( <> ) : t -> t -> t Or_error.t
 val ( < ) : t -> t -> t Or_error.t
@@ -30,6 +31,9 @@ val argmax : t -> dim:int -> t Or_error.t
 val argmin : t -> dim:int -> t Or_error.t
 val sum_all : t -> t Or_error.t
 val mean_all : t -> t Or_error.t
+val max_pool2d : t -> size:[ `Square of int | `Rectangle of int * int ] -> t Or_error.t
+val narrow : t -> dim:int -> start:int -> len:int -> t Or_error.t
+val flatten_from : t -> dim:int -> t Or_error.t
 val shape : t -> int list
 val dtype : t -> Dtype.t
 val to_string : t -> string

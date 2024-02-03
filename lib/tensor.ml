@@ -77,6 +77,10 @@ external to_device : t -> device:Device.t -> (t, string) result = "rust_tensor_t
 
 let to_device t ~device = to_device t ~device |> Result.map_error ~f:Error.of_string
 
+external reshape : t -> shape:int list -> (t, string) result = "rust_tensor_reshape"
+
+let reshape t ~shape = reshape t ~shape |> Result.map_error ~f:Error.of_string
+
 external eq : t -> t -> (t, string) result = "rust_tensor_eq"
 external ne : t -> t -> (t, string) result = "rust_tensor_ne"
 external lt : t -> t -> (t, string) result = "rust_tensor_lt"
@@ -114,6 +118,33 @@ let sum_all t = sum_all t |> Result.map_error ~f:Error.of_string
 external mean_all : t -> (t, string) result = "rust_tensor_mean_all"
 
 let mean_all t = mean_all t |> Result.map_error ~f:Error.of_string
+
+external max_pool2d : t -> int -> int -> (t, string) result = "rust_tensor_max_pool2d"
+
+let max_pool2d t ~size =
+  let size1, size2 =
+    match size with
+    | `Square size -> size, size
+    | `Rectangle (size1, size2) -> size1, size2
+  in
+  max_pool2d t size1 size2 |> Result.map_error ~f:Error.of_string
+;;
+
+external flatten_from : t -> dim:int -> (t, string) result = "rust_tensor_flatten_from"
+
+let flatten_from t ~dim = flatten_from t ~dim |> Result.map_error ~f:Error.of_string
+
+external narrow
+  :  t
+  -> dim:int
+  -> start:int
+  -> len:int
+  -> (t, string) result
+  = "rust_tensor_narrow"
+
+let narrow t ~dim ~start ~len =
+  narrow t ~dim ~start ~len |> Result.map_error ~f:Error.of_string
+;;
 
 external shape : t -> int list = "rust_tensor_shape"
 external dtype : t -> Dtype.t = "rust_tensor_dtype"
