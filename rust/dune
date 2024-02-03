@@ -9,6 +9,22 @@
  (targets libcandle_ocaml.a dllcandle_ocaml.so)
  (deps
   (source_tree .))
+ (enabled_if
+  (= %{profile} release))
+ (action
+  (no-infer
+   (progn
+    (run cargo build --release)
+    (copy ./target/release/libcandle_ocaml.so ./dllcandle_ocaml.so)
+    (copy ./target/release/libcandle_ocaml.a ./libcandle_ocaml.a)))))
+
+(rule
+ (targets libcandle_ocaml.a dllcandle_ocaml.so)
+ (deps
+  (source_tree .))
+ (enabled_if
+  (not
+   (= %{profile} release)))
  (action
   (no-infer
    (progn
