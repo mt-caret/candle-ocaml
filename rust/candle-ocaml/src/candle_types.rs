@@ -18,7 +18,9 @@ unsafe impl FromOCaml<CandleDType> for DType {
                 DType::F64,
             }
         };
-        result.expect("Failure when unpacking an OCaml<TimeUnit> variant into PolarsTimeUnit (unexpected tag value")
+        result.expect(
+            "Failure when unpacking an OCaml<CandleDType> variant into DType (unexpected tag value",
+        )
     }
 }
 
