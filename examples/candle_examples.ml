@@ -84,10 +84,28 @@ let mnist_training =
       ~doc:"DIR directory containing MNIST dataset"
   and epochs =
     flag "epochs" (optional_with_default 200 int) ~doc:"INT number of epochs to train for"
+  and device =
+    flag
+      "device"
+      (optional_with_default
+         `cuda
+         (Arg_type.enumerated_sexpable
+            (module struct
+              type t =
+                [ `cuda
+                | `cpu
+                ]
+              [@@deriving enumerate, sexp]
+            end)))
+      ~doc:" device to run it on"
   in
   fun () ->
     let open Or_error.Let_syntax in
-    let%bind device = Device.cuda_if_available ~ordinal:0 in
+    let%bind device =
+      match device with
+      | `cuda -> Device.cuda ~ordinal:0
+      | `cpu -> Ok Device.cpu
+    in
     let%bind dataset = Dataset.Mnist.load ~dir:mnist_dataset_dir in
     print_s
       [%message
