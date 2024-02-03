@@ -1,7 +1,7 @@
 open! Core
 
 (** [Tensor.t] represents a multi-dimensional matrix in candle. *)
-type t
+type t [@@deriving sexp_of]
 
 val arange : start:float -> end_:float -> t Or_error.t
 val randn : mean:float -> std:float -> shape:int list -> t Or_error.t
@@ -14,8 +14,22 @@ val from_bigarray
   -> (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t
   -> t Or_error.t
 
+val to_scalar : t -> float Or_error.t
+val to_dtype : t -> dtype:Dtype.t -> t Or_error.t
+val ( = ) : t -> t -> t Or_error.t
+val ( <> ) : t -> t -> t Or_error.t
+val ( < ) : t -> t -> t Or_error.t
+val ( > ) : t -> t -> t Or_error.t
+val ( <= ) : t -> t -> t Or_error.t
+val ( >= ) : t -> t -> t Or_error.t
 val matmul : t -> t -> t Or_error.t
 val relu : t -> t Or_error.t
+val argmax : t -> dim:int -> t Or_error.t
+val argmin : t -> dim:int -> t Or_error.t
+val sum_all : t -> t Or_error.t
+val mean_all : t -> t Or_error.t
+val shape : t -> int list
+val dtype : t -> Dtype.t
 val to_string : t -> string
 
 (** [save] saves a single tensor in safetensors format *)

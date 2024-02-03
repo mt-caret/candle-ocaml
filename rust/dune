@@ -25,6 +25,11 @@
   -lnvrtc
   -lcurand
   -lcublas
+  ; TODO: candle-datasets should be the reason why we need these two libraries;
+  ; probably can move into its own crate/library so that this dependency isn't
+  ; always required.
+  -lssl
+  -lcrypto
   -I
   /usr/local/cuda/include
   -L

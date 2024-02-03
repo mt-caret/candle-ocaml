@@ -52,6 +52,28 @@ let from_bigarray ?shape bigarray =
   from_bigarray bigarray ~shape |> Result.map_error ~f:Error.of_string
 ;;
 
+external to_scalar : t -> (float, string) result = "rust_tensor_to_scalar"
+
+let to_scalar t = to_scalar t |> Result.map_error ~f:Error.of_string
+
+external to_dtype : t -> dtype:Dtype.t -> (t, string) result = "rust_tensor_to_dtype"
+
+let to_dtype t ~dtype = to_dtype t ~dtype |> Result.map_error ~f:Error.of_string
+
+external eq : t -> t -> (t, string) result = "rust_tensor_eq"
+external ne : t -> t -> (t, string) result = "rust_tensor_ne"
+external lt : t -> t -> (t, string) result = "rust_tensor_lt"
+external gt : t -> t -> (t, string) result = "rust_tensor_gt"
+external le : t -> t -> (t, string) result = "rust_tensor_le"
+external ge : t -> t -> (t, string) result = "rust_tensor_ge"
+
+let ( = ) t1 t2 = eq t1 t2 |> Result.map_error ~f:Error.of_string
+let ( <> ) t1 t2 = ne t1 t2 |> Result.map_error ~f:Error.of_string
+let ( < ) t1 t2 = lt t1 t2 |> Result.map_error ~f:Error.of_string
+let ( > ) t1 t2 = gt t1 t2 |> Result.map_error ~f:Error.of_string
+let ( <= ) t1 t2 = le t1 t2 |> Result.map_error ~f:Error.of_string
+let ( >= ) t1 t2 = ge t1 t2 |> Result.map_error ~f:Error.of_string
+
 external matmul : t -> t -> (t, string) result = "rust_tensor_matmul"
 
 let matmul t1 t2 = matmul t1 t2 |> Result.map_error ~f:Error.of_string
@@ -60,6 +82,24 @@ external relu : t -> (t, string) result = "rust_tensor_relu"
 
 let relu t = relu t |> Result.map_error ~f:Error.of_string
 
+external argmax : t -> dim:int -> (t, string) result = "rust_tensor_argmax"
+
+let argmax t ~dim = argmax t ~dim |> Result.map_error ~f:Error.of_string
+
+external argmin : t -> dim:int -> (t, string) result = "rust_tensor_argmin"
+
+let argmin t ~dim = argmin t ~dim |> Result.map_error ~f:Error.of_string
+
+external sum_all : t -> (t, string) result = "rust_tensor_sum_all"
+
+let sum_all t = sum_all t |> Result.map_error ~f:Error.of_string
+
+external mean_all : t -> (t, string) result = "rust_tensor_mean_all"
+
+let mean_all t = mean_all t |> Result.map_error ~f:Error.of_string
+
+external shape : t -> int list = "rust_tensor_shape"
+external dtype : t -> Dtype.t = "rust_tensor_dtype"
 external to_string : t -> string = "rust_tensor_to_string"
 
 external save
@@ -92,10 +132,5 @@ let load_many ~filename =
   |> Or_error.map ~f:String.Map.of_alist_exn
 ;;
 
-let%expect_test "create" =
-  arange ~start:0. ~end_:10. |> Or_error.ok_exn |> to_string |> print_endline;
-  [%expect {|
-    [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.]
-    Tensor[[10], f64] |}]
-;;
-(* randn ~mean:0. ~std:1. ~shape:[ 1 ] |> Or_error.ok_exn |> to_string |> print_endline; *)
+(* TODO: replicate Debug instance in Rust *)
+let sexp_of_t t = [%sexp { shape : int list = shape t; dtype : Dtype.t = dtype t }]

@@ -1,0 +1,6 @@
+(executable
+ (name candle_examples)
+ (public_name candle.examples)
+ (libraries candle core_unix.command_unix core_unix.filename_unix)
+ (preprocess
+  (pps ppx_jane ppx_typed_fields)))
