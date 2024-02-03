@@ -30,18 +30,26 @@ module Mlp = struct
   ;;
 end
 
-let training_loop (dataset : Dataset.Mnist.t) ~learning_rate ~epochs =
+let training_loop (dataset : Dataset.Mnist.t) ~learning_rate ~epochs ~device =
   let open Or_error.Let_syntax in
-  let%bind train_labels = Tensor.to_dtype dataset.train_labels ~dtype:U32 in
-  let%bind train_images = Tensor.to_dtype dataset.train_images ~dtype:F64 in
+  let%bind train_labels =
+    Tensor.to_dtype dataset.train_labels ~dtype:U32 >>= Tensor.to_device ~device
+  in
+  let%bind train_images =
+    Tensor.to_dtype dataset.train_images ~dtype:F64 >>= Tensor.to_device ~device
+  in
   let varmap = Var.Map.create () in
-  let vs = Var.Builder.of_varmap varmap in
+  let vs = Var.Builder.of_varmap varmap ~device in
   let%bind model = Mlp.create vs in
   let%bind sgd = Optim.Sgd.create varmap ~learning_rate in
-  let%bind test_labels = Tensor.to_dtype dataset.test_labels ~dtype:U32 in
-  let%bind test_images = Tensor.to_dtype dataset.test_images ~dtype:F64 in
+  let%bind test_labels =
+    Tensor.to_dtype dataset.test_labels ~dtype:U32 >>= Tensor.to_device ~device
+  in
+  let%bind test_images =
+    Tensor.to_dtype dataset.test_images ~dtype:F64 >>= Tensor.to_device ~device
+  in
   let num_test_labels = Tensor.shape test_labels |> List.hd_exn in
-  List.range 0 epochs
+  List.range 1 (epochs + 1)
   |> List.fold_result ~init:() ~f:(fun () epoch ->
     print_endline [%string "Epoch %{epoch#Int}: start"];
     let%bind logits = Mlp.forward model train_images in
@@ -61,6 +69,8 @@ let training_loop (dataset : Dataset.Mnist.t) ~learning_rate ~epochs =
     print_endline
       [%string
         "Epoch %{epoch#Int}: train loss: %{loss#Float} test acc: %{test_accuracy#Float}"];
+    (* TODO: It's pretty sad we need to do something like this :/ *)
+    if epoch % 10 = 0 then Gc.full_major ();
     return ())
 ;;
 
@@ -72,9 +82,12 @@ let mnist_training =
       "mnist-dataset-dir"
       (optional Filename_unix.arg_type)
       ~doc:"DIR directory containing MNIST dataset"
+  and epochs =
+    flag "epochs" (optional_with_default 200 int) ~doc:"INT number of epochs to train for"
   in
   fun () ->
     let open Or_error.Let_syntax in
+    let%bind device = Device.cuda_if_available ~ordinal:0 in
     let%bind dataset = Dataset.Mnist.load ~dir:mnist_dataset_dir in
     print_s
       [%message
@@ -83,7 +96,7 @@ let mnist_training =
           ~train_labels:(dataset.train_labels : Tensor.t)
           ~test_images:(dataset.test_images : Tensor.t)
           ~test_labels:(dataset.test_labels : Tensor.t)];
-    training_loop dataset ~learning_rate:0.05 ~epochs:10
+    training_loop dataset ~learning_rate:0.05 ~epochs ~device
 ;;
 
 let () =

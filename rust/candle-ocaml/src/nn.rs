@@ -4,6 +4,7 @@ use candle_nn::{linear, loss, ops, optim, var_builder, var_map, Linear, Optimize
 use ocaml_interop::{
     impl_from_ocaml_variant, DynBox, OCaml, OCamlFloat, OCamlInt, OCamlRef, ToOCaml,
 };
+use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -22,10 +23,11 @@ ocaml_interop::ocaml_export! {
         Abstract(var_map::VarMap::new()).to_ocaml(cr)
     }
 
-    fn rust_var_builder(cr, varmap: OCamlRef<DynBox<var_map::VarMap>>) -> OCaml<DynBox<var_builder::VarBuilder>> {
+    fn rust_var_builder(cr, varmap: OCamlRef<DynBox<var_map::VarMap>>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<DynBox<var_builder::VarBuilder>> {
         let Abstract(varmap) = varmap.to_rust(cr);
+        let Abstract(device) = device.to_rust(cr);
 
-        Abstract(var_builder::VarBuilder::from_varmap(&varmap, DType::F64, &Device::Cpu)).to_ocaml(cr)
+        Abstract(var_builder::VarBuilder::from_varmap(&varmap, DType::F64, device.borrow())).to_ocaml(cr)
     }
 
     fn rust_var_builder_push_prefix(cr, vs: OCamlRef<DynBox<var_builder::VarBuilder>>, prefix: OCamlRef<String>) -> OCaml<DynBox<var_builder::VarBuilder>> {

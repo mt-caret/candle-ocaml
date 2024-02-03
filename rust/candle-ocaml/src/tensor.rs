@@ -8,46 +8,52 @@ use ocaml_interop::{
     OCamlUniformArray, ToOCaml,
 };
 use std::borrow::Borrow;
+use std::rc::Rc;
 
 ocaml_interop::ocaml_export! {
-    fn rust_tensor_arange(cr, start: OCamlRef<OCamlFloat>, end: OCamlRef<OCamlFloat>) -> OCaml<Result<DynBox<Tensor>, String>> {
+    fn rust_tensor_arange(cr, start: OCamlRef<OCamlFloat>, end: OCamlRef<OCamlFloat>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<Result<DynBox<Tensor>, String>> {
         let start: f64 = start.to_rust(cr);
         let end: f64 = end.to_rust(cr);
+        let Abstract(device) = device.to_rust(cr);
 
-        Tensor::arange(start, end, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+        Tensor::arange(start, end, device.borrow()).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
-    fn rust_tensor_randn(cr, mean: OCamlRef<OCamlFloat>, std: OCamlRef<OCamlFloat>, shape: OCamlRef<OCamlList<OCamlInt>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+    fn rust_tensor_randn(cr, mean: OCamlRef<OCamlFloat>, std: OCamlRef<OCamlFloat>, shape: OCamlRef<OCamlList<OCamlInt>>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<Result<DynBox<Tensor>, String>> {
         let mean: f64 = mean.to_rust(cr);
         let std: f64 = std.to_rust(cr);
         let shape: Vec<i64> = shape.to_rust(cr);
         let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+        let Abstract(device) = device.to_rust(cr);
 
-        Tensor::randn(mean, std, shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+        Tensor::randn(mean, std, shape, device.borrow()).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
-    fn rust_tensor_from_float_array(cr, array: OCamlRef<OCamlFloatArray>, shape: OCamlRef<OCamlList<OCamlInt>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+    fn rust_tensor_from_float_array(cr, array: OCamlRef<OCamlFloatArray>, shape: OCamlRef<OCamlList<OCamlInt>>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<Result<DynBox<Tensor>, String>> {
         let array: Vec<f64> = array.to_rust(cr);
         let shape: Vec<i64> = shape.to_rust(cr);
         let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+        let Abstract(device) = device.to_rust(cr);
 
-        Tensor::from_vec(array, shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+        Tensor::from_vec(array, shape, device.borrow()).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
-    fn rust_tensor_from_uniform_array(cr, array: OCamlRef<OCamlUniformArray<OCamlFloat>>, shape: OCamlRef<OCamlList<OCamlInt>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+    fn rust_tensor_from_uniform_array(cr, array: OCamlRef<OCamlUniformArray<OCamlFloat>>, shape: OCamlRef<OCamlList<OCamlInt>>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<Result<DynBox<Tensor>, String>> {
         let array: Vec<f64> = array.to_rust(cr);
         let shape: Vec<i64> = shape.to_rust(cr);
         let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+        let Abstract(device) = device.to_rust(cr);
 
-        Tensor::from_vec(array, shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+        Tensor::from_vec(array, shape, device.borrow()).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
-    fn rust_tensor_from_bigarray(cr, bigarray: OCamlRef<bigarray::Array1<f64>>, shape: OCamlRef<OCamlList<OCamlInt>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+    fn rust_tensor_from_bigarray(cr, bigarray: OCamlRef<bigarray::Array1<f64>>, shape: OCamlRef<OCamlList<OCamlInt>>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<Result<DynBox<Tensor>, String>> {
         let bigarray: BoxRoot<bigarray::Array1<f64>> = bigarray.to_boxroot(cr);
         let shape: Vec<i64> = shape.to_rust(cr);
         let shape: Vec<usize> = shape.into_iter().map(|n| n as usize).collect();
+        let Abstract(device) = device.to_rust(cr);
 
-        Tensor::from_slice(bigarray.get(cr).borrow(), shape, &Device::Cpu).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+        Tensor::from_slice(bigarray.get(cr).borrow(), shape, device.borrow()).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
     fn rust_tensor_to_scalar(cr, tensor: OCamlRef<DynBox<Tensor>>) -> OCaml<Result<OCamlFloat, String>> {
@@ -61,6 +67,13 @@ ocaml_interop::ocaml_export! {
         let dtype = dtype.to_rust(cr);
 
         tensor.to_dtype(dtype).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
+    }
+
+    fn rust_tensor_to_device(cr, tensor: OCamlRef<DynBox<Tensor>>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<Result<DynBox<Tensor>, String>> {
+        let Abstract(tensor) = tensor.to_rust(cr);
+        let Abstract(device) = device.to_rust(cr);
+
+        tensor.to_device(device.borrow()).map(Abstract).map_err(|err: Error| err.to_string()).to_ocaml(cr)
     }
 
     fn rust_tensor_eq(cr, tensor1: OCamlRef<DynBox<Tensor>>, tensor2: OCamlRef<DynBox<Tensor>>) -> OCaml<Result<DynBox<Tensor>, String>> {
@@ -157,10 +170,25 @@ ocaml_interop::ocaml_export! {
         .into_iter().map(|dim| dim as i64).collect::<Vec<i64>>().to_ocaml(cr)
     }
 
+    fn rust_tensor_dim(cr, tensor: OCamlRef<DynBox<Tensor>>, dim: OCamlRef<OCamlInt>) -> OCaml<Result<OCamlInt,String>> {
+        let Abstract(tensor) = tensor.to_rust(cr);
+        let CandleDimResult(dim_result) = dim.to_rust(cr);
+
+        dim_result
+        .and_then(|dim| tensor.dim(dim).map(|dim| dim as i64))
+        .map_err(|err: Error| err.to_string()).to_ocaml(cr)
+    }
+
     fn rust_tensor_dtype(cr, tensor: OCamlRef<DynBox<Tensor>>) -> OCaml<CandleDType> {
         let Abstract(tensor) = tensor.to_rust(cr);
 
         tensor.dtype().to_ocaml(cr)
+    }
+
+    fn rust_tensor_device(cr, tensor: OCamlRef<DynBox<Tensor>>) -> OCaml<DynBox<Rc<Device>>> {
+        let Abstract(tensor) = tensor.to_rust(cr);
+
+        Abstract(Rc::new(tensor.device().clone())).to_ocaml(cr)
     }
 
     fn rust_tensor_to_string(cr, tensor: OCamlRef<DynBox<Tensor>>) -> OCaml<String> {
@@ -189,10 +217,11 @@ ocaml_interop::ocaml_export! {
         .to_ocaml(cr)
     }
 
-    fn rust_tensor_load_many(cr, filename: OCamlRef<String>) -> OCaml<Result<OCamlList<(String, DynBox<Tensor>)>, String>> {
+    fn rust_tensor_load_many(cr, filename: OCamlRef<String>, device: OCamlRef<DynBox<Rc<Device>>>) -> OCaml<Result<OCamlList<(String, DynBox<Tensor>)>, String>> {
         let filename: String = filename.to_rust(cr);
+        let Abstract(device) = device.to_rust(cr);
 
-        safetensors::load(filename, &Device::Cpu)
+        safetensors::load(filename, device.borrow())
         .map(|tensors|
             tensors.into_iter()
             .map(|(name, tensor)| (name, Abstract(tensor)))

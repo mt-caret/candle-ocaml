@@ -1,13 +1,14 @@
 open! Core
 open! Candle
 
+let device = Device.cpu
 let print t = Tensor.to_string t |> print_endline
 
 let%expect_test "create" =
   let open Or_error.Let_syntax in
   Or_error.ok_exn
   @@
-  let%bind t = Tensor.arange ~start:(-5.) ~end_:5. in
+  let%bind t = Tensor.arange ~start:(-5.) ~end_:5. ~device in
   print t;
   [%expect
     {|
@@ -24,7 +25,7 @@ let%expect_test "create from arrays" =
   let open Or_error.Let_syntax in
   Or_error.ok_exn
   @@
-  let%bind t = Tensor.from_array [| 0.; 1.; 2.; 3.; 4.; 5. |] ~shape:[ 2; 3 ] in
+  let%bind t = Tensor.from_array [| 0.; 1.; 2.; 3.; 4.; 5. |] ~shape:[ 2; 3 ] ~device in
   print t;
   [%expect {|
     [[0., 1., 2.],
@@ -34,6 +35,7 @@ let%expect_test "create from arrays" =
     Tensor.from_float_array
       (Stdlib.Float.Array.of_list [ 0.; 1.; 2.; 3.; 4.; 5. ])
       ~shape:[ 2; 3 ]
+      ~device
   in
   print t;
   [%expect {|
@@ -44,6 +46,7 @@ let%expect_test "create from arrays" =
     Tensor.from_bigarray
       (Bigarray.Array1.init Float64 C_layout 6 Float.of_int)
       ~shape:[ 2; 3 ]
+      ~device
   in
   print t;
   [%expect {|
@@ -57,10 +60,10 @@ let%expect_test "saving and loading tensors" =
   Or_error.ok_exn
   @@ Filename_extended.with_temp_dir "candle-ocaml" "tensor" ~f:(fun temp_dir ->
     let filename = temp_dir ^/ "tensor.safetensors" in
-    let%bind t = Tensor.arange ~start:0. ~end_:10. in
+    let%bind t = Tensor.arange ~start:0. ~end_:10. ~device in
     let%bind () = Tensor.save t ~name:"tensor_name" ~filename in
     let%map () =
-      Tensor.load_many ~filename
+      Tensor.load_many ~filename ~device
       >>| Map.to_alist
       >>| List.iter ~f:(fun (name, tensor) ->
         print_endline [%string "%{name}: %{tensor#Tensor}"])

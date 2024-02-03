@@ -1,7 +1,8 @@
-use candle_core::{shape::Dim, DType, Error, D};
+use candle_core::{shape::Dim, DType, DeviceLocation, Error, D};
 use ocaml_interop::{
     ocaml_alloc_variant, ocaml_unpack_variant, FromOCaml, OCaml, OCamlInt, OCamlRuntime, ToOCaml,
 };
+use ocaml_sys::{caml_alloc, store_field};
 
 pub struct CandleDType {}
 
@@ -85,5 +86,27 @@ unsafe impl FromOCaml<OCamlInt> for CandleDimResult {
                 }
             }
         })
+    }
+}
+
+pub struct CandleDeviceLocation {}
+
+unsafe impl ToOCaml<CandleDeviceLocation> for DeviceLocation {
+    fn to_ocaml<'a>(&self, cr: &'a mut OCamlRuntime) -> OCaml<'a, CandleDeviceLocation> {
+        unsafe {
+            match self {
+                DeviceLocation::Cpu => OCaml::new(cr, 0),
+                DeviceLocation::Cuda { gpu_id } => {
+                    let block: OCaml<CandleDeviceLocation> = OCaml::new(cr, caml_alloc(1, 0));
+                    store_field(block.get_raw(), 0, ((*gpu_id as isize) << 1) | 1);
+                    block
+                }
+                DeviceLocation::Metal { gpu_id } => {
+                    let block: OCaml<CandleDeviceLocation> = OCaml::new(cr, caml_alloc(1, 0));
+                    store_field(block.get_raw(), 0, ((*gpu_id as isize) << 1) | 1);
+                    block
+                }
+            }
+        }
     }
 }
