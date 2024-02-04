@@ -10,28 +10,16 @@ use syn::punctuated::Punctuated;
 fn drop_lifetime_parameters(type_: syn::Type) -> syn::Type {
     let mut type_ = type_.clone();
 
-    if let syn::Type::Path(syn::TypePath {
-        path: syn::Path {
-            ref mut segments, ..
-        },
-        ..
-    }) = type_
-    {
-        for syn::PathSegment {
-            ref mut arguments, ..
-        } in segments.iter_mut()
-        {
-            if let syn::PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
-                ref mut args,
-                ..
-            }) = arguments
-            {
-                *args = args
-                    .clone()
-                    .into_iter()
+    if let syn::Type::Path(ref mut path) = type_ {
+        for path_segment in path.path.segments.iter_mut() {
+            if let syn::PathArguments::AngleBracketed(ref mut args) = path_segment.arguments {
+                args.args = args
+                    .args
+                    .iter()
                     .filter(|generic_argument| {
                         !matches!(generic_argument, syn::GenericArgument::Lifetime(_))
                     })
+                    .cloned()
                     .collect();
             }
         }
