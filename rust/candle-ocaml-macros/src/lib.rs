@@ -8,58 +8,36 @@ use syn::parse_macro_input;
 use syn::punctuated::Punctuated;
 
 fn drop_lifetime_parameters(type_: syn::Type) -> syn::Type {
-    match type_ {
-        syn::Type::Path(
-            ref path @ syn::TypePath {
-                path: syn::Path { ref segments, .. },
-                ..
-            },
-        ) => {
-            let segments = segments
-                .clone()
-                .into_iter()
-                .map(
-                    |ref path_segment @ syn::PathSegment { ref arguments, .. }| match arguments
-                        .clone()
-                    {
-                        syn::PathArguments::AngleBracketed(
-                            ref generic_arguments @ syn::AngleBracketedGenericArguments {
-                                ref args,
-                                ..
-                            },
-                        ) => {
-                            let args = args
-                                .clone()
-                                .into_iter()
-                                .filter(|generic_argument| {
-                                    !matches!(generic_argument, syn::GenericArgument::Lifetime(_))
-                                })
-                                .collect();
-                            syn::PathSegment {
-                                arguments: syn::PathArguments::AngleBracketed(
-                                    syn::AngleBracketedGenericArguments {
-                                        args,
-                                        ..generic_arguments.clone()
-                                    },
-                                ),
-                                ..path_segment.clone()
-                            }
-                        }
-                        _ => path_segment.clone(),
-                    },
-                )
-                .collect();
+    let mut type_ = type_.clone();
 
-            syn::Type::Path(syn::TypePath {
-                path: syn::Path {
-                    segments,
-                    ..path.path
-                },
-                ..path.clone()
-            })
+    if let syn::Type::Path(syn::TypePath {
+        path: syn::Path {
+            ref mut segments, ..
+        },
+        ..
+    }) = type_
+    {
+        for syn::PathSegment {
+            ref mut arguments, ..
+        } in segments.iter_mut()
+        {
+            if let syn::PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
+                ref mut args,
+                ..
+            }) = arguments
+            {
+                *args = args
+                    .clone()
+                    .into_iter()
+                    .filter(|generic_argument| {
+                        !matches!(generic_argument, syn::GenericArgument::Lifetime(_))
+                    })
+                    .collect();
+            }
         }
-        _ => type_,
     }
+
+    type_
 }
 
 // TODO: a common mistake when using the attribute macro is to specify OCaml<_>
